@@ -3,7 +3,7 @@ name: Build Custom OpenWebUI
 # Chỉ chạy khi có code mới vào nhánh custom
 on:
   push:
-    branches: [ "lelong-custom" ]
+    branches: [ "${{ secrets.DOCKER_USERNAME }}-custom" ]
 
 jobs:
   build-and-push:
@@ -30,7 +30,7 @@ jobs:
           context: .
           file: ./Dockerfile  # Hoặc Dockerfile.custom nếu bạn tạo riêng
           push: true
-          tags: lelong/open-webui:latest, lelong/open-webui:${{ github.sha }}
+          tags: ${{secrets.DOCKER_USERNAME}}/open-webui:latest, ${{secrets.DOCKER_USERNAME}}/open-webui:${{ github.sha }}
           # Dùng cache để build nhanh hơn
-          cache-from: type=registry,ref=lelong/open-webui:buildcache
-          cache-to: type=registry,ref=lelong/open-webui:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/open-webui:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/open-webui:buildcache,mode=max
