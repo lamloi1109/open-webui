@@ -3,7 +3,7 @@ name: Build Custom OpenWebUI
 # Chỉ chạy khi có code mới vào nhánh custom
 on:
   push:
-    branches: [ "lamloi1109-custom" ]
+    branches: [ "lelong-custom" ]
 
 jobs:
   build-and-push:
