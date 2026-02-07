@@ -6,6 +6,8 @@ from fastapi.concurrency import run_in_threadpool
 import logging
 import io
 import zipfile
+from open_webui.models.group_lightrag_config import GroupLightragConfigs
+from open_webui.utils.lightrag_client import LightRAGClient, LightRAGClientError
 
 from sqlalchemy.orm import Session
 from open_webui.internal.db import get_session
@@ -675,6 +677,9 @@ def remove_file_from_knowledge_by_id(
     user=Depends(get_verified_user),
     db: Session = Depends(get_session),
 ):
+
+    log.info("remove_file_from_knowledge_by_id")
+    
     knowledge = Knowledges.get_knowledge_by_id(id=id, db=db)
     if not knowledge:
         raise HTTPException(
@@ -718,6 +723,63 @@ def remove_file_from_knowledge_by_id(
         pass
 
     if delete_file:
+        # Check if this file was processed by LightRAG
+        is_lightrag_file = False
+        lightrag_doc_id = None
+        
+        if file.data:
+            lightrag_doc_id = file.data.get("rag_id")
+            is_lightrag_file = lightrag_doc_id is not None
+        
+        # Delete from LightRAG if applicable
+        if is_lightrag_file:
+            log.info(f"[Knowledge Remove] Detected LightRAG file: file_id={form_data.file_id}, rag_id={lightrag_doc_id}")
+            
+            try:
+                # Get LightRAG configuration for this knowledge base
+                lightrag_config = GroupLightragConfigs.get_config_by_knowledge_base_id(
+                    id, db=db
+                )
+                
+                if lightrag_config and lightrag_config.lightrag_url:
+                    # Initialize LightRAG client
+                    lightrag_client = LightRAGClient(
+                        base_url=lightrag_config.lightrag_url,
+                        workspace=lightrag_config.lightrag_workspace_name,
+                    )
+                    
+                    # Delete from LightRAG (best-effort, non-blocking)
+                    import asyncio
+                    delete_success = asyncio.run(
+                        lightrag_client.delete_document(
+                            doc_id=lightrag_doc_id,
+                            delete_llm_cache=True,
+                        )
+                    )
+                    
+                    if not delete_success:
+                        log.warning(
+                            f"[Knowledge Remove] Failed to delete from LightRAG "
+                            f"(file_id={form_data.file_id}, rag_id={lightrag_doc_id}). "
+                            f"Continuing with local deletion."
+                        )
+                    else:
+                        log.info(
+                            f"[Knowledge Remove] Successfully deleted from LightRAG "
+                            f"(file_id={form_data.file_id}, rag_id={lightrag_doc_id})"
+                        )
+                else:
+                    log.warning(
+                        f"[Knowledge Remove] No LightRAG config found for knowledge_base_id={id}"
+                    )
+                    
+            except Exception as e:
+                # Log error but proceed with local deletion (best-effort)
+                log.error(
+                    f"[Knowledge Remove] Error while deleting from LightRAG "
+                    f"(file_id={form_data.file_id}, rag_id={lightrag_doc_id}): {e}"
+                )
+        
         try:
             # Remove the file's collection from vector database
             file_collection = f"file-{form_data.file_id}"

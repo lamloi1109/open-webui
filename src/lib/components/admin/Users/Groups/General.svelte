@@ -101,6 +101,44 @@
 	</div>
 </div>
 
+<hr class="border-gray-50 dark:border-gray-850/30 my-1" />
+
+<div class="flex flex-col w-full mt-2">
+	<div class=" mb-1 text-xs text-gray-500">{$i18n.t('LightRAG Knowledge Base')}</div>
+
+	{#if edit && !data?.lightrag_url}
+		<div class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 mb-2">
+			⚠️ {$i18n.t('This group is not linked to a LightRAG workspace. Add configuration below to enable file management.')}
+		</div>
+	{/if}
+
+	<div class="flex flex-col gap-2">
+		<div>
+			<div class="mb-0.5 text-xs text-gray-500">{$i18n.t('LightRAG URL')}</div>
+			<input
+				class="w-full text-sm bg-transparent placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-hidden border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1"
+				type="url"
+				bind:value={data.lightrag_url}
+				placeholder="http://localhost:9621"
+				autocomplete="off"
+			/>
+		</div>
+
+		<div>
+			<div class="mb-0.5 text-xs text-gray-500">{$i18n.t('Workspace Name')}</div>
+			<input
+				class="w-full text-sm bg-transparent placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-hidden border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1"
+				type="text"
+				bind:value={data.lightrag_workspace_name}
+				placeholder={name ? name.toLowerCase().replace(/\s+/g, '-') : 'workspace-name'}
+				autocomplete="off"
+			/>
+			<div class="text-xs text-gray-400 mt-0.5">{$i18n.t('Unique identifier for this group\'s knowledge base')}</div>
+		</div>
+	</div>
+</div>
+
+
 {#if edit}
 	<div class="flex flex-col w-full mt-2">
 		<div class=" mb-0.5 text-xs text-gray-500">{$i18n.t('Actions')}</div>
