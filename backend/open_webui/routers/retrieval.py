@@ -1593,8 +1593,42 @@ def process_file(
         file = Files.get_file_by_id_and_user_id(form_data.file_id, user.id, db=db)
 
     if file:
-        try:
+        # ========== GUARD CLAUSE: Skip LightRAG Files ==========
+        # Check if this file has been processed by LightRAG
+        # These files are managed externally and should NOT be processed locally
+        # Check both file.meta AND file.data since rag_status might be in either
+        is_lightrag_file = False
+        rag_id = None
+        
+        if file.data:
+            if file.data.get("rag_status") == "processed" or file.data.get("rag_id"):
+                is_lightrag_file = True
+                rag_id = file.data.get("rag_id")
+        
+        if not is_lightrag_file and file.meta:
+            if file.meta.get("rag_status") == "processed" or file.meta.get("rag_id"):
+                is_lightrag_file = True
+                rag_id = file.meta.get("rag_id")
+        
+        if is_lightrag_file:
+            log.info(
+                f"[LightRAG BYPASS] File {file.id} ({file.filename}) is managed by LightRAG. "
+                f"Skipping local embedding. (rag_id={rag_id})"
+            )
+            # Return early - no processing needed
+            return {
+                "status": True,
+                "collection_name": None,  # Not stored in local ChromaDB
+                "filename": file.filename,
+                "content": file.data.get("content", "") if file.data else "",
+                "lightrag_managed": True,
+            }
+        # ========== END GUARD CLAUSE ==========
+        
 
+
+    if file:
+        try:
             collection_name = form_data.collection_name
 
             if collection_name is None:
