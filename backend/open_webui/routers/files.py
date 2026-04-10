@@ -415,7 +415,7 @@ def upload_file_handler(
                     docs = loader.load(
                         filename=name,
                         file_content_type=file.content_type or "application/octet-stream",
-                        file_path=file_path
+                        file_path=Storage.get_file(file_path)
                     )
                     
                     # Combine all extracted text

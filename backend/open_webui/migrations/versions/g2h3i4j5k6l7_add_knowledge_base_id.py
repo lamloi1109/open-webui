@@ -20,10 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add knowledge_base_id column to group_lightrag_config table."""
-    op.add_column(
-        "group_lightrag_config",
-        sa.Column("knowledge_base_id", sa.Text(), nullable=True),
-    )
+    # op.add_column(
+    #     "group_lightrag_config",
+    #     sa.Column("knowledge_base_id", sa.Text(), nullable=True),
+    # )
 
 
 def downgrade() -> None:

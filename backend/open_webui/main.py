@@ -1392,13 +1392,25 @@ async def inspect_websocket(request: Request, call_next):
     return await call_next(request)
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGIN,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Handle CORS
+# If CORS_ALLOW_ORIGIN is set to "*", we use allow_origin_regex to allow all origins
+# preventing the issue where allow_origins=["*"] and allow_credentials=True are not allowed together.
+if CORS_ALLOW_ORIGIN == ["*"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex="http://.*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ALLOW_ORIGIN,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 app.mount("/ws", socket_app)
